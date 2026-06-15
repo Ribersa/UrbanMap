@@ -22,7 +22,24 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
+
+    /**
+     * Check if the user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Get the mysteries submitted by this user.
+     */
+    public function mysteries()
+    {
+        return $this->hasMany(Mystery::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

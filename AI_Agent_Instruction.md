@@ -1,16 +1,18 @@
-# 🤖 AI Developer Agent Instructions: Urban Legend Map (Laravel 12 + Livewire 4 + Mapbox)
+# 🤖 AI Developer Agent Instructions: Urban Legend Map (Laravel 12 + Livewire 4 + Mapbox + Fortify Authentication)
 
-You are an expert full-stack Laravel developer. Your task is to build the "Urban Legend & Local Mystery Marker Map" application. Follow the strict architectural guidelines, database schema, and step-by-step prompts below.
+Dokumen ini adalah cetak biru mutakhir yang menggabungkan fitur peta, sistem autentikasi Laravel Fortify, kontrol multi-user (Admin & User), serta sistem moderasi (Approval) oleh Admin sebelum lokasi baru muncul di peta.
 
 ---
 
 ## 1. System Rules & Tech Stack Vitals
 * **Framework:** Laravel 12 (latest structural standards).
 * **Reactivity:** Livewire 4 & Alpine.js.
-* **Map Engine:** Mapbox GL JS (v3+ via CDN, do NOT use npm for Mapbox).
-* **Database:** PostgreSQL (with PostGIS extensions) or MySQL (with Spatial data type).
-* **Tailwind CSS:** Use full-page layout, dark theme baseline (`bg-slate-950`, `text-slate-100`).
-* **Livewire 4 Requirement:** Always use `@script` and `@endscript` directives for asset injection. Avoid direct inline JS inside template loops. Use `wire:ignore` on map containers.
+* **Authentication Backend:** Laravel Fortify (Headless auth backend).
+* **Map Engine:** Mapbox GL JS (v3+ via CDN).
+* **Database:** MySQL (InfinityFree compatible schema).
+* **Tailwind CSS:** Dark theme baseline (`bg-slate-950`, `text-slate-100`).
+* **Livewire 4 Requirement:** Always use `@script` and `@endscript` directives for asset injection. Use `wire:ignore` on map containers.
+* **Approval Logic:** Only locations with `is_verified = true` will be drawn on the Mapbox layer. Admin panel handles toggling this state.
 
 ---
 
@@ -20,17 +22,27 @@ Generate files matching this exact structure:
 ```text
 ├── app/
 │   ├── Livewire/
-│   │   ├── UrbanMap.php          (Main Full-Page Component)
+│   │   ├── UrbanMap.php          (Main Map & User Report Engine)
+│   │   ├── Admin/
+│   │   │   └── ApprovalPanel.php (Admin dashboard to verify pins)
 │   │   └── Components/
-│   │       ├── DrawerDetails.php (Sidebar panel info)
-│   │       └── FilterPanel.php   (Category controller)
+│   │       └── AddLocationModal.php (User form to submit new legends)
 │   └── Models/
+│       ├── User.php
 │       ├── Mystery.php
 │       └── LiveReport.php
-
 ---
 
 ## 3. Database Schema Blueprint
+
+Migration: modify_users_table
+
+Schema::table('users', function (Blueprint $table) {
+    // Add role identifier: 'admin' or 'user'
+    $table->string('role')->default('user'); 
+});
+
+---
 
 Migration: create_mysteries_table
 
@@ -44,20 +56,8 @@ Schema::create('mysteries', function (Blueprint $table) {
     $table->integer('scary_level')->default(1);
     $table->decimal('latitude', 10, 7);
     $table->decimal('longitude', 10, 7);
-    $table->boolean('is_verified')->default(false);
+    $table->boolean('is_verified')->default(false); // CRITICAL: Default false, awaits Admin approval
     $table->timestamps();
     
-    // Indexing for performance
     $table->index(['latitude', 'longitude']);
-});
-
----
-
-Migration: create_live_reports_table
-
-Schema::create('live_reports', function (function ($table) {
-    $table->id();
-    $table->foreignId('mystery_id')->constrained()->onDelete('cascade');
-    $table->string('status_note');
-    $table->timestamps();
 });

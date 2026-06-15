@@ -11,6 +11,16 @@
          setTimeout(() => { radarAlert = null }, 8000);
      ">
 
+    {{-- ===== Admin Dashboard Button ===== --}}
+    @if(auth()->check() && auth()->user()->role === 'admin')
+        <div class="fixed top-6 right-6 z-50">
+            <a href="{{ route('admin.approval') }}" class="group relative px-4 py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur border border-indigo-500/50 text-indigo-300 hover:text-indigo-200 font-semibold rounded-xl shadow-lg shadow-indigo-900/30 transition-all duration-300 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Admin Panel
+            </a>
+        </div>
+    @endif
+
     {{-- ===== Custom CSS for Pulse & Drawer ===== --}}
     <style>
         /* Drawer backdrop blur overlay */
@@ -73,6 +83,21 @@
 
             <span x-text="radarScanning ? 'Memindai...' : 'Aktifkan Radar Spooky'"></span>
         </button>
+    </div>
+
+    {{-- ===== Add Mystery Floating Button ===== --}}
+    <div class="fixed bottom-8 right-8 z-50">
+        @auth
+            <button onclick="Livewire.dispatch('openAddLocationModal', { lat: null, lng: null })" class="group relative px-5 py-3 bg-slate-800/90 hover:bg-slate-700 backdrop-blur border border-slate-600 text-cyan-400 hover:text-cyan-300 font-semibold rounded-xl shadow-lg shadow-cyan-900/20 transition-all duration-300 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Tambah Lokasi Misteri
+            </button>
+        @else
+            <a href="{{ route('login') }}" class="group relative px-5 py-3 bg-slate-800/90 hover:bg-slate-700 backdrop-blur border border-slate-600 text-slate-300 hover:text-white font-semibold rounded-xl shadow-lg transition-all duration-300 flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                Login untuk Menambah Lokasi
+            </a>
+        @endauth
     </div>
 
     {{-- ===== Radar Alert Banner ===== --}}
@@ -345,6 +370,23 @@
                         this.map.getCanvas().style.cursor = '';
                     });
 
+                    // ── Empty Map Click to Add Location ──
+                    this.map.on('click', (e) => {
+                        // Check if we clicked on a marker first
+                        const features = this.map.queryRenderedFeatures(e.point, {
+                            layers: ['mystery-markers']
+                        });
+
+                        // If no markers were clicked, it's an empty spot
+                        if (!features.length) {
+                            @auth
+                                Livewire.dispatch('openAddLocationModal', { lat: e.lngLat.lat, lng: e.lngLat.lng });
+                            @else
+                                alert('Silakan login terlebih dahulu untuk menyarankan lokasi misteri baru.');
+                            @endauth
+                        }
+                    });
+
                     this.updateBounds();
                 });
 
@@ -422,4 +464,7 @@
         }));
     </script>
     @endscript
+
+    {{-- ===== Add Location Modal Component ===== --}}
+    <livewire:add-location-modal />
 </div>

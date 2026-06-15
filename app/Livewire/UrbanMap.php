@@ -17,6 +17,7 @@ class UrbanMap extends Component
     public function updateBounds($west, $south, $east, $north)
     {
         $this->locations = Mystery::select('id', 'title', 'category', 'latitude', 'longitude')
+            ->where('is_verified', true)
             ->whereBetween('longitude', [$west, $east])
             ->whereBetween('latitude', [$south, $north])
             ->withCount(['liveReports as has_recent_report' => function ($query) {
@@ -80,7 +81,9 @@ class UrbanMap extends Component
         $earthRadius = 6371; // km
         $thresholdKm = 1;
 
-        $mysteries = Mystery::select('id', 'title', 'latitude', 'longitude')->get();
+        $mysteries = Mystery::select('id', 'title', 'latitude', 'longitude')
+            ->where('is_verified', true)
+            ->get();
         $nearbyNames = [];
 
         foreach ($mysteries as $mystery) {
