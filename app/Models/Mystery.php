@@ -16,6 +16,7 @@ class Mystery extends Model
         'latitude',
         'longitude',
         'is_verified',
+        'image_path',
     ];
 
     public function liveReports()

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Models\Mystery;
 use App\Models\LiveReport;
 use Livewire\Attributes\Layout;
@@ -10,9 +11,12 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.app')]
 class UrbanMap extends Component
 {
+    use WithFileUploads;
+
     public $locations = [];
     public $selectedMystery = null;
     public $reportText = '';
+    public $reportPhoto;
 
     public function updateBounds($west, $south, $east, $north)
     {
@@ -33,6 +37,7 @@ class UrbanMap extends Component
             $query->orderBy('created_at', 'desc');
         }])->find($id);
         $this->reportText = '';
+        $this->reportPhoto = null;
         $this->dispatch('open-drawer');
     }
 
@@ -44,21 +49,31 @@ class UrbanMap extends Component
 
         $this->validate([
             'reportText' => 'required|string|min:3|max:150',
+            'reportPhoto' => 'nullable|image|max:1024',
         ], [
             'reportText.required' => 'Laporan tidak boleh kosong.',
             'reportText.min' => 'Laporan minimal 3 karakter.',
             'reportText.max' => 'Laporan maksimal 150 karakter.',
+            'reportPhoto.image' => 'File harus berupa gambar (jpg, png, gif, webp).',
+            'reportPhoto.max' => 'Ukuran gambar maksimal 1MB.',
         ]);
 
         // XSS Protection: strip all HTML tags
         $sanitized = strip_tags(trim($this->reportText));
 
+        $imagePath = null;
+        if ($this->reportPhoto) {
+            $imagePath = $this->reportPhoto->store('report-photos', 'public');
+        }
+
         LiveReport::create([
             'mystery_id' => $this->selectedMystery->id,
             'status_note' => $sanitized,
+            'image_path' => $imagePath,
         ]);
 
         $this->reportText = '';
+        $this->reportPhoto = null;
         $this->resetValidation();
 
         // Refresh the selected mystery with updated reports

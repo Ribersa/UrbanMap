@@ -93,6 +93,26 @@
                 </div>
             </div>
 
+            <!-- Photo Upload -->
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Foto Bukti Lokasi <span class="text-slate-600">(Opsional, maks 1MB)</span></label>
+                <div class="relative">
+                    <input type="file" wire:model="photo" accept="image/*" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-cyan-400 hover:file:bg-slate-600 file:cursor-pointer file:transition-colors cursor-pointer bg-slate-800 border @error('photo') border-red-500 @else border-slate-600 @enderror rounded-lg focus:outline-none">
+                    <div wire:loading wire:target="photo" class="absolute inset-0 bg-slate-800/80 rounded-lg flex items-center justify-center">
+                        <svg class="animate-spin h-5 w-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    </div>
+                </div>
+                @error('photo') <span class="text-xs text-red-400 mt-1 block">{{ $message }}</span> @enderror
+                @if($photo)
+                    <div class="mt-2 relative group">
+                        <img src="{{ $photo->temporaryUrl() }}" class="w-full h-36 object-cover rounded-lg border border-slate-600 shadow-md">
+                        <button type="button" wire:click="$set('photo', null)" class="absolute top-2 right-2 bg-red-600/80 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
             <!-- Submit Button -->
             <div class="pt-4 flex justify-end gap-3">
                 <button type="button" @click="$wire.closeModal()" class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">

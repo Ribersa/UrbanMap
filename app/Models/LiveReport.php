@@ -9,6 +9,7 @@ class LiveReport extends Model
     protected $fillable = [
         'mystery_id',
         'status_note',
+        'image_path',
     ];
 
     public function mystery()

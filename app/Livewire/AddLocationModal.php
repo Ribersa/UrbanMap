@@ -3,11 +3,14 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Models\Mystery;
 use Illuminate\Support\Str;
 
 class AddLocationModal extends Component
 {
+    use WithFileUploads;
+
     public $isOpen = false;
     
     public $title;
@@ -16,6 +19,7 @@ class AddLocationModal extends Component
     public $scary_level = 1;
     public $latitude;
     public $longitude;
+    public $photo;
 
     public $successMessage = '';
 
@@ -47,6 +51,7 @@ class AddLocationModal extends Component
         $this->scary_level = 1;
         $this->latitude = '';
         $this->longitude = '';
+        $this->photo = null;
         $this->successMessage = '';
         $this->resetValidation();
     }
@@ -64,7 +69,16 @@ class AddLocationModal extends Component
             'scary_level' => 'required|integer|min:1|max:5',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'photo' => 'nullable|image|max:1024',
+        ], [
+            'photo.image' => 'File harus berupa gambar (jpg, png, gif, webp).',
+            'photo.max' => 'Ukuran gambar maksimal 1MB.',
         ]);
+
+        $imagePath = null;
+        if ($this->photo) {
+            $imagePath = $this->photo->store('mysteries-photos', 'public');
+        }
 
         Mystery::create([
             'user_id' => auth()->id(),
@@ -76,6 +90,7 @@ class AddLocationModal extends Component
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'is_verified' => false,
+            'image_path' => $imagePath,
         ]);
 
         $this->successMessage = 'Lokasi berhasil diajukan! Menunggu persetujuan Admin.';

@@ -330,6 +330,18 @@
                  {{-- Description --}}
                  <p class="text-slate-300 mb-8 leading-relaxed">{{ $selectedMystery->description }}</p>
 
+                 @if($selectedMystery->image_path)
+                     <div class="mb-8">
+                         <img src="{{ asset('storage/' . $selectedMystery->image_path) }}" alt="Foto Lokasi" class="w-full h-48 object-cover rounded-xl border border-slate-700/50 shadow-lg">
+                     </div>
+                 @endif
+
+                 {{-- Navigation Button --}}
+                 <button @click="openNavigation({{ $selectedMystery->latitude }}, {{ $selectedMystery->longitude }})" class="w-full mb-8 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold rounded-xl border border-cyan-500/30 hover:border-cyan-500 transition-all shadow-lg flex items-center justify-center gap-2 group">
+                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                     Panduan Rute Jalan
+                 </button>
+
                  {{-- Live Reports Section with polling --}}
                  <div wire:poll.15s="refreshReports">
                      <h3 class="text-lg font-semibold border-b border-slate-700 pb-2 mb-4 text-slate-200 flex items-center justify-between">
@@ -343,6 +355,11 @@
                          @forelse($selectedMystery->liveReports as $report)
                              <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all duration-200 hover:bg-slate-800/70">
                                  <p class="text-sm text-slate-300 leading-relaxed">{{ $report->status_note }}</p>
+                                 @if($report->image_path)
+                                     <div class="mt-3">
+                                         <img src="{{ asset('storage/' . $report->image_path) }}" class="w-full h-32 object-cover rounded-lg border border-slate-700/50">
+                                     </div>
+                                 @endif
                                  <span class="text-xs text-slate-500 mt-3 flex items-center">
                                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                      {{ $report->created_at->diffForHumans() }}
@@ -380,6 +397,26 @@
                                  <span class="text-xs text-slate-500">{{ strlen($reportText) }}/150</span>
                              </div>
                          </div>
+
+                         <!-- Photo Upload for Report -->
+                         <div>
+                             <div class="relative">
+                                 <input type="file" wire:model="reportPhoto" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-cyan-400 hover:file:bg-slate-600 file:cursor-pointer cursor-pointer bg-slate-800 border @error('reportPhoto') border-red-500 @else border-slate-700 @enderror rounded-lg focus:outline-none transition-colors">
+                                 <div wire:loading wire:target="reportPhoto" class="absolute inset-0 bg-slate-800/80 rounded-lg flex items-center justify-center">
+                                     <svg class="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                 </div>
+                             </div>
+                             @error('reportPhoto') <span class="text-xs text-red-400 mt-1 block">{{ $message }}</span> @enderror
+                             @if($reportPhoto)
+                                 <div class="mt-2 relative group">
+                                     <img src="{{ $reportPhoto->temporaryUrl() }}" class="w-full h-24 object-cover rounded-lg border border-slate-600 shadow-md">
+                                     <button type="button" wire:click="$set('reportPhoto', null)" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                     </button>
+                                 </div>
+                             @endif
+                         </div>
+
                          <button type="submit"
                              class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-red-600 hover:from-purple-500 hover:to-red-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 flex items-center justify-center gap-2">
                              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
@@ -668,6 +705,17 @@
 
             destroy() {
                 if (this.pulseAnimId) cancelAnimationFrame(this.pulseAnimId);
+            },
+
+            openNavigation(destLat, destLng) {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                const isApple = /iPad|iPhone|iPod|Mac/.test(userAgent) && !window.MSStream;
+
+                if (isApple) {
+                    window.open(`maps://?daddr=${destLat},${destLng}&dirflg=d`, '_blank');
+                } else {
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`, '_blank');
+                }
             }
         }));
     </script>
