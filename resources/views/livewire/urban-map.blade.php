@@ -3,6 +3,30 @@
          openDrawer: false,
          radarScanning: false,
          radarAlert: null,
+         showWelcome: false,
+         tourStep: 0,
+         init() {
+             if (!localStorage.getItem('visited')) {
+                 this.showWelcome = true;
+             }
+         },
+         startTour() {
+             this.showWelcome = false;
+             this.tourStep = 1;
+         },
+         skipTour() {
+             this.showWelcome = false;
+             this.tourStep = 0;
+             localStorage.setItem('visited', 'true');
+         },
+         nextStep() {
+             if (this.tourStep >= 4) {
+                 this.tourStep = 0;
+                 localStorage.setItem('visited', 'true');
+             } else {
+                 this.tourStep++;
+             }
+         }
      }"
      @open-drawer.window="openDrawer = true"
      @radar-alert.window="
@@ -11,15 +35,108 @@
          setTimeout(() => { radarAlert = null }, 8000);
      ">
 
-    {{-- ===== Admin Dashboard Button ===== --}}
-    @if(auth()->check() && auth()->user()->role === 'admin')
-        <div class="fixed top-6 right-6 z-50">
+    {{-- ===== Top Right Controls (Admin & Settings) ===== --}}
+    <div class="fixed top-6 right-6 z-50 flex items-start gap-4">
+        {{-- ===== Admin Dashboard Button ===== --}}
+        @if(auth()->check() && auth()->user()->role === 'admin')
             <a href="{{ route('admin.approval') }}" class="group relative px-4 py-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur border border-indigo-500/50 text-indigo-300 hover:text-indigo-200 font-semibold rounded-xl shadow-lg shadow-indigo-900/30 transition-all duration-300 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 Admin Panel
             </a>
+        @endif
+
+        {{-- ===== Settings Canvas ===== --}}
+        <div x-data="{ showSettings: false, theme: 'mapbox://styles/mapbox/dark-v11' }" class="relative">
+            <button @click="showSettings = !showSettings" class="p-2.5 bg-slate-900/80 hover:bg-slate-800 backdrop-blur border border-slate-700/50 text-slate-300 hover:text-white rounded-xl shadow-lg transition-all duration-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
+            
+            <div x-show="showSettings" @click.away="showSettings = false" x-transition 
+                 class="absolute top-full right-0 mt-2 w-56 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-2xl p-4"
+                 style="display: none;">
+                <h4 class="text-sm font-semibold text-slate-300 mb-3 border-b border-slate-700/50 pb-2">Pengaturan Peta</h4>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/dark-v11" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Dark</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/satellite-v9" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Satellite</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/light-v11" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Light</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/streets-v12" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Streets</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/outdoors-v12" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Outdoors</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="mapTheme" value="mapbox://styles/mapbox/navigation-night-v1" x-model="theme" @change="$dispatch('change-theme', theme)" class="form-radio text-purple-500 bg-slate-800 border-slate-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">Tema Nav Night</span>
+                    </label>
+                    
+                    <hr class="border-slate-700/50 my-3">
+                    
+                    <button @click="showSettings = false; startTour()" class="w-full flex items-center justify-between text-sm text-slate-400 hover:text-cyan-400 transition-colors group">
+                        <span>Bantuan / Tur Ulang</span>
+                        <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </button>
+                </div>
+            </div>
         </div>
-    @endif
+    </div>
+
+    {{-- ===== Welcome Modal ===== --}}
+    <div x-show="showWelcome" 
+         x-transition.opacity.duration.500ms
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+         style="display: none;">
+        <div class="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl max-w-lg w-full p-8 relative transform transition-all text-center mx-4">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-cyan-500/10 mb-6">
+                <svg class="h-8 w-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-3">Selamat Datang di Peta Misteri Lokal</h2>
+            <p class="text-slate-400 mb-8 leading-relaxed">Platform berbasis komunitas untuk memetakan kisah mistis, sejarah wingit, dan mitos di sekitarmu. Bantu kami mengungkap misteri dengan ikut berkontribusi!</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button @click="startTour()" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-xl transition-colors w-full sm:w-auto shadow-lg shadow-cyan-500/30">Mulai Tur Panduan</button>
+                <button @click="skipTour()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl transition-colors border border-slate-700 w-full sm:w-auto">Lewati</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===== Tour Overlay & Tooltips ===== --}}
+    <div x-show="tourStep > 0" class="fixed inset-0 bg-slate-950/70 z-[60] pointer-events-auto transition-opacity duration-300" style="display: none;">
+        <div class="absolute inset-0 z-[70] pointer-events-none">
+            <div class="bg-slate-800 border border-cyan-500/50 rounded-xl p-5 shadow-2xl max-w-sm pointer-events-auto absolute transition-all duration-500"
+                 :class="{
+                     'top-1/3 left-1/2 -translate-x-1/2 text-center': tourStep === 1,
+                     'bottom-28 left-1/2 -translate-x-1/2 text-center': tourStep === 2,
+                     'bottom-8 left-80 text-left': tourStep === 3,
+                     'bottom-28 right-8 text-right': tourStep === 4
+                 }">
+                <h3 class="text-lg font-bold text-white mb-2" x-text="
+                    tourStep === 1 ? 'Peta Interaktif' : 
+                    (tourStep === 2 ? 'Radar Gaib' : 
+                    (tourStep === 3 ? 'Legenda Warna' : 'Kontribusi Lokasi'))
+                "></h3>
+                <p class="text-slate-300 text-sm mb-5 leading-relaxed" x-text="
+                    tourStep === 1 ? 'Ini adalah peta interaktif. Geser dan zoom untuk mencari titik misteri di daerahmu.' : 
+                    (tourStep === 2 ? 'Klik tombol ini untuk mengaktifkan radar gaib dan mendeteksi lokasi mistis dalam radius terdekat dari posisimu.' : 
+                    (tourStep === 3 ? 'Gunakan panduan warna ini untuk mengetahui jenis misteri yang ada di peta.' : 'Gunakan tombol ini untuk masuk akun dan mulai mendaftarkan cerita misteri versimu sendiri di peta.'))
+                "></p>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-cyan-400 font-medium" x-text="'Langkah ' + tourStep + ' dari 4'"></span>
+                    <button @click="nextStep()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/20" x-text="tourStep === 4 ? 'Selesai' : 'Lanjut'"></button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- ===== Custom CSS for Pulse & Drawer ===== --}}
     <style>
@@ -40,8 +157,31 @@
     {{-- ===== Map Container ===== --}}
     <div id="map" wire:ignore x-data="initMapbox()" class="w-full h-full"></div>
 
+    {{-- ===== Map Legend ===== --}}
+    <div class="fixed bottom-8 left-8 z-50 bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-xl pointer-events-none transition-all duration-500" :class="{ '!z-[65] ring-4 ring-cyan-500 ring-offset-4 ring-offset-slate-900 bg-slate-800': tourStep === 3 }">
+        <h4 class="text-sm font-semibold text-slate-300 mb-3 border-b border-slate-700/50 pb-2">Kategori Misteri</h4>
+        <div class="space-y-2 text-sm text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                <span>Penampakan Makhluk Halus</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span>
+                <span>Tempat Bersejarah / Wingit</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                <span>Mitos Hewan / Pesugihan</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                <span>Kutukan / Tempat Sakral</span>
+            </div>
+        </div>
+    </div>
+
     {{-- ===== Radar Spooky Button (floating) ===== --}}
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" wire:ignore>
+    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500" wire:ignore :class="{ '!z-[65] ring-4 ring-cyan-500 ring-offset-4 ring-offset-slate-900 rounded-full': tourStep === 2 }">
         <button @click="
             radarScanning = true;
             radarAlert = null;
@@ -86,7 +226,7 @@
     </div>
 
     {{-- ===== Add Mystery Floating Button ===== --}}
-    <div class="fixed bottom-8 right-8 z-50">
+    <div class="fixed bottom-8 right-8 z-50 transition-all duration-500" :class="{ '!z-[65] ring-4 ring-cyan-500 ring-offset-4 ring-offset-slate-900 rounded-xl': tourStep === 4 }">
         @auth
             <button onclick="Livewire.dispatch('openAddLocationModal', { lat: null, lng: null })" class="group relative px-5 py-3 bg-slate-800/90 hover:bg-slate-700 backdrop-blur border border-slate-600 text-cyan-400 hover:text-cyan-300 font-semibold rounded-xl shadow-lg shadow-cyan-900/20 transition-all duration-300 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
@@ -256,12 +396,135 @@
                 });
 
                 this.map.on('load', () => {
+                    this.setupLayers();
+                    this.startPulseAnimation();
+
+                    // ── Auto Geolocation on Load ──
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                const lng = pos.coords.longitude;
+                                const lat = pos.coords.latitude;
+                                
+                                this.map.flyTo({
+                                    center: [lng, lat],
+                                    zoom: 14,
+                                    speed: 1.2,
+                                    curve: 1.4,
+                                    essential: true
+                                });
+
+                                const el = document.createElement('div');
+                                el.className = 'user-marker z-50';
+                                el.innerHTML = `
+                                    <div class="relative flex h-6 w-6 justify-center items-center">
+                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                      <span class="relative inline-flex rounded-full h-4 w-4 bg-cyan-500 shadow-[0_0_12px_rgba(34,211,238,1)] border-2 border-white"></span>
+                                    </div>
+                                `;
+
+                                new mapboxgl.Marker(el)
+                                    .setLngLat([lng, lat])
+                                    .addTo(this.map);
+                            },
+                            (err) => console.warn('Geolocation failed:', err),
+                            { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                    }
+
+                    // ── Click event ──
+                    this.map.on('click', 'mystery-markers', (e) => {
+                        const id = e.features[0].properties.id;
+                        $wire.selectMystery(id);
+                    });
+
+                    // ── Hover cursor ──
+                    this.map.on('mouseenter', 'mystery-markers', () => {
+                        this.map.getCanvas().style.cursor = 'pointer';
+                    });
+                    this.map.on('mouseleave', 'mystery-markers', () => {
+                        this.map.getCanvas().style.cursor = '';
+                    });
+
+                    // ── Empty Map Click to Add Location ──
+                    this.map.on('click', (e) => {
+                        // Check if we clicked on a marker first
+                        const features = this.map.queryRenderedFeatures(e.point, {
+                            layers: ['mystery-markers']
+                        });
+
+                        // If no markers were clicked, it's an empty spot
+                        if (!features.length) {
+                            @auth
+                                Livewire.dispatch('openAddLocationModal', { lat: e.lngLat.lat, lng: e.lngLat.lng });
+                            @else
+                                alert('Silakan login terlebih dahulu untuk menyarankan lokasi misteri baru.');
+                            @endauth
+                        }
+                    });
+
+                    this.updateBounds();
+                });
+
+                this.map.on('style.load', () => {
+                    // Re-add layers when style changes
+                    if (this.map.isStyleLoaded()) {
+                        this.setupLayers();
+                        this.refreshLocationsData($wire.locations);
+                    }
+                });
+
+                window.addEventListener('change-theme', (e) => {
+                    if (this.map) {
+                        this.map.setStyle(e.detail);
+                    }
+                });
+
+                this.map.on('moveend', () => {
+                    this.updateBounds();
+                });
+
+                // ── Watch for data changes ──
+                this.$watch('$wire.locations', (newLocations) => {
+                    this.refreshLocationsData(newLocations);
+                });
+            },
+
+            refreshLocationsData(newLocations) {
+                if (this.map && this.map.getSource('mysteries')) {
+                    const features = newLocations.map(location => ({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [parseFloat(location.longitude), parseFloat(location.latitude)]
+                        },
+                        properties: {
+                            id: location.id,
+                            title: location.title,
+                            description: location.description,
+                            category: location.category,
+                            scary_level: location.scary_level,
+                            has_recent_report: location.has_recent_report || 0,
+                        }
+                    }));
+
+                    this.map.getSource('mysteries').setData({
+                        type: 'FeatureCollection',
+                        features: features
+                    });
+                }
+            },
+
+            setupLayers() {
+                if (!this.map.getSource('mysteries')) {
                     // ── GeoJSON Source ──
                     this.map.addSource('mysteries', {
                         type: 'geojson',
                         data: { type: 'FeatureCollection', features: [] }
                     });
+                }
 
+                if (!this.map.getLayer('mystery-glow')) {
                     // ── Layer 1: Outer glow ring (category-colored) ──
                     this.map.addLayer({
                         id: 'mystery-glow',
@@ -352,73 +615,7 @@
                             'circle-opacity': 0.9,
                         }
                     });
-
-                    // ── Pulse Animation Loop ──
-                    this.startPulseAnimation();
-
-                    // ── Click event ──
-                    this.map.on('click', 'mystery-markers', (e) => {
-                        const id = e.features[0].properties.id;
-                        $wire.selectMystery(id);
-                    });
-
-                    // ── Hover cursor ──
-                    this.map.on('mouseenter', 'mystery-markers', () => {
-                        this.map.getCanvas().style.cursor = 'pointer';
-                    });
-                    this.map.on('mouseleave', 'mystery-markers', () => {
-                        this.map.getCanvas().style.cursor = '';
-                    });
-
-                    // ── Empty Map Click to Add Location ──
-                    this.map.on('click', (e) => {
-                        // Check if we clicked on a marker first
-                        const features = this.map.queryRenderedFeatures(e.point, {
-                            layers: ['mystery-markers']
-                        });
-
-                        // If no markers were clicked, it's an empty spot
-                        if (!features.length) {
-                            @auth
-                                Livewire.dispatch('openAddLocationModal', { lat: e.lngLat.lat, lng: e.lngLat.lng });
-                            @else
-                                alert('Silakan login terlebih dahulu untuk menyarankan lokasi misteri baru.');
-                            @endauth
-                        }
-                    });
-
-                    this.updateBounds();
-                });
-
-                this.map.on('moveend', () => {
-                    this.updateBounds();
-                });
-
-                // ── Watch for data changes ──
-                this.$watch('$wire.locations', (newLocations) => {
-                    if (this.map && this.map.getSource('mysteries')) {
-                        const features = newLocations.map(location => ({
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: [parseFloat(location.longitude), parseFloat(location.latitude)]
-                            },
-                            properties: {
-                                id: location.id,
-                                title: location.title,
-                                description: location.description,
-                                category: location.category,
-                                scary_level: location.scary_level,
-                                has_recent_report: location.has_recent_report || 0,
-                            }
-                        }));
-
-                        this.map.getSource('mysteries').setData({
-                            type: 'FeatureCollection',
-                            features: features
-                        });
-                    }
-                });
+                }
             },
 
             startPulseAnimation() {
