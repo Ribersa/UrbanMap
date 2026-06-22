@@ -131,8 +131,26 @@ class UrbanMap extends Component
         }
     }
 
+    public function deleteMail($id)
+    {
+        if (auth()->check()) {
+            \App\Models\Mailbox::where('id', $id)->where('user_id', auth()->id())->delete();
+        }
+    }
+
+    public function markMailboxAsRead()
+    {
+        if (auth()->check()) {
+            \App\Models\Mailbox::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
+        }
+    }
+
     public function render()
     {
-        return view('livewire.urban-map');
+        $mailboxes = auth()->check() ? \App\Models\Mailbox::where('user_id', auth()->id())->latest()->get() : collect();
+
+        return view('livewire.urban-map', [
+            'mailboxes' => $mailboxes
+        ]);
     }
 }

@@ -42,6 +42,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the mailboxes for the user.
+     */
+    public function mailboxes()
+    {
+        return $this->hasMany(Mailbox::class);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
