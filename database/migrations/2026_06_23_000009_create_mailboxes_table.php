@@ -1,16 +1,17 @@
 <?php
 
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
+        Schema::disableForeignKeyConstraints();
+{
+        // From 2026_06_22_022045_create_mailboxes_table.php
         Schema::create('mailboxes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -18,14 +19,17 @@ return new class extends Migration
             $table->text('message');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
-        });
+        });}
+        Schema::enableForeignKeyConstraints();
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('mailboxes');
+        Schema::disableForeignKeyConstraints();
+{
+        // From 2026_06_22_022045_create_mailboxes_table.php
+        Schema::dropIfExists('mailboxes');}
+        Schema::enableForeignKeyConstraints();
     }
 };
+

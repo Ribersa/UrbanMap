@@ -1,16 +1,17 @@
 <?php
 
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
+        Schema::disableForeignKeyConstraints();
+{
+        // From 0001_01_01_000000_create_users_table.php
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -35,15 +36,26 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+        // From 2026_06_09_000001_add_role_to_users_table.php
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('role')->default('user')->after('password');
+        });}
+        Schema::enableForeignKeyConstraints();
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
+        Schema::disableForeignKeyConstraints();
+{
+        // From 2026_06_09_000001_add_role_to_users_table.php
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('role');
+        });
+        // From 0001_01_01_000000_create_users_table.php
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('sessions');}
+        Schema::enableForeignKeyConstraints();
     }
 };
+

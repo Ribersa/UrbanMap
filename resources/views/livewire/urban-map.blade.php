@@ -378,6 +378,225 @@
                      Panduan Rute Jalan
                  </button>
 
+                 {{-- Ritual & Pantangan Section --}}
+                 @if($selectedMystery->ritualRequirements->count() > 0)
+                 <div class="mb-8">
+                     <h3 class="text-lg font-semibold border-b border-slate-700 pb-2 mb-4 text-slate-200 flex items-center gap-2">
+                         <span class="text-xl">📿</span>
+                         <span>Ritual & Pantangan Setempat</span>
+                     </h3>
+                     <div class="space-y-4">
+                         @foreach($selectedMystery->ritualRequirements as $ritual)
+                             @php
+                                 $typeConfig = match($ritual->ritual_type) {
+                                     'pantangan' => [
+                                         'icon'        => '🚫',
+                                         'label'       => 'Pantangan',
+                                         'bg'          => 'bg-red-950/60',
+                                         'border'      => 'border-red-500/40',
+                                         'badge_bg'    => 'bg-red-500/20',
+                                         'badge_text'  => 'text-red-400',
+                                         'badge_border'=> 'border-red-500/40',
+                                         'exp_border'  => 'border-red-500/20',
+                                         'exp_hdr'     => 'text-red-300',
+                                     ],
+                                     'prasyarat' => [
+                                         'icon'        => '🔑',
+                                         'label'       => 'Prasyarat',
+                                         'bg'          => 'bg-cyan-950/60',
+                                         'border'      => 'border-cyan-500/40',
+                                         'badge_bg'    => 'bg-cyan-500/20',
+                                         'badge_text'  => 'text-cyan-400',
+                                         'badge_border'=> 'border-cyan-500/40',
+                                         'exp_border'  => 'border-cyan-500/20',
+                                         'exp_hdr'     => 'text-cyan-300',
+                                     ],
+                                     default => [
+                                         'icon'        => '💡',
+                                         'label'       => 'Tips',
+                                         'bg'          => 'bg-emerald-950/60',
+                                         'border'      => 'border-emerald-500/40',
+                                         'badge_bg'    => 'bg-emerald-500/20',
+                                         'badge_text'  => 'text-emerald-400',
+                                         'badge_border'=> 'border-emerald-500/40',
+                                         'exp_border'  => 'border-emerald-500/20',
+                                         'exp_hdr'     => 'text-emerald-300',
+                                     ],
+                                 };
+                                 $riskConfig = match($ritual->risk_level) {
+                                     'high'   => ['label' => 'Risiko Tinggi',  'text' => 'text-red-400',    'dot' => 'bg-red-500'],
+                                     'medium' => ['label' => 'Risiko Sedang', 'text' => 'text-amber-400',  'dot' => 'bg-amber-500'],
+                                     default  => ['label' => 'Risiko Rendah', 'text' => 'text-emerald-400','dot' => 'bg-emerald-500'],
+                                 };
+                             @endphp
+
+                             {{-- Main ritual card --}}
+                             <div x-data="{ showExperiences: false, showExpForm: false }"
+                                  class="rounded-xl border {{ $typeConfig['bg'] }} {{ $typeConfig['border'] }} overflow-hidden transition-all duration-200">
+
+                                 {{-- Instruction row --}}
+                                 <div class="p-4">
+                                     <div class="flex items-start gap-3">
+                                         <span class="text-xl mt-0.5 select-none">{{ $typeConfig['icon'] }}</span>
+                                         <div class="flex-1 min-w-0">
+                                             <p class="text-sm text-slate-200 leading-relaxed">{{ $ritual->instruction }}</p>
+                                             <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border {{ $typeConfig['badge_bg'] }} {{ $typeConfig['badge_text'] }} {{ $typeConfig['badge_border'] }}">
+                                                     {{ $typeConfig['label'] }}
+                                                 </span>
+                                                 <span class="inline-flex items-center gap-1 text-xs {{ $riskConfig['text'] }}">
+                                                     <span class="w-1.5 h-1.5 rounded-full {{ $riskConfig['dot'] }} inline-block"></span>
+                                                     {{ $riskConfig['label'] }}
+                                                 </span>
+                                             </div>
+                                         </div>
+                                     </div>
+
+                                     {{-- ⚗️ Peralatan / Sesaji list (only if has items) --}}
+                                     @if($ritual->ritualItems->count() > 0)
+                                         <div class="mt-3 pt-3 border-t border-white/5">
+                                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                                 <span>⚗️</span> Peralatan / Sesaji Dibutuhkan
+                                             </p>
+                                             <ul class="space-y-1.5">
+                                                 @foreach($ritual->ritualItems as $item)
+                                                     <li class="flex items-start gap-2 text-xs">
+                                                         <span class="mt-0.5 text-amber-400 shrink-0">◈</span>
+                                                         <div>
+                                                             <span class="text-slate-200 font-medium">{{ $item->item_name }}</span>
+                                                             <span class="text-slate-500 mx-1">—</span>
+                                                             <span class="text-slate-400">{{ $item->quantity }}</span>
+                                                             @if($item->notes)
+                                                                 <p class="text-slate-500 italic mt-0.5">{{ $item->notes }}</p>
+                                                             @endif
+                                                         </div>
+                                                     </li>
+                                                 @endforeach
+                                             </ul>
+                                         </div>
+                                     @endif
+
+                                     {{-- 🤝 Komitmen Keselamatan (Auth Only) --}}
+                                     @auth
+                                         @php
+                                             $hasAcknowledged = $ritual->ritualAcknowledgements->where('user_id', auth()->id())->first();
+                                         @endphp
+                                         <div class="mt-3 pt-3 border-t border-white/5">
+                                             @if($hasAcknowledged)
+                                                 <div class="w-full flex items-center justify-center gap-2 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs font-semibold text-emerald-400 cursor-default">
+                                                     <span>✅</span>
+                                                     Telah Berkomitmen Patuh
+                                                     <span class="text-[10px] text-emerald-500/70 ml-1 font-normal">({{ $hasAcknowledged->acknowledged_at->diffForHumans() }})</span>
+                                                 </div>
+                                             @else
+                                                 <button wire:click="acknowledgeRitual({{ $ritual->id }})" class="w-full flex items-center justify-center gap-2 py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all group">
+                                                     <span class="group-hover:scale-110 transition-transform">🤝</span>
+                                                     Saya Berjanji Patuh
+                                                 </button>
+                                             @endif
+                                         </div>
+                                     @endauth
+
+                                     {{-- 👁 Experience toggle button --}}
+                                     <button @click="showExperiences = !showExperiences"
+                                             class="mt-3 w-full flex items-center justify-between text-xs text-slate-500 hover:text-slate-300 transition-colors group">
+                                         <span class="flex items-center gap-1.5">
+                                             <span>👁</span>
+                                             <span x-text="showExperiences ? 'Sembunyikan Pengalaman Mistis' : 'Lihat Pengalaman Mistis ({{ $ritual->ritualExperiences->count() }})'"></span>
+                                         </span>
+                                         <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="showExperiences && 'rotate-180'"
+                                              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                         </svg>
+                                     </button>
+                                 </div>
+
+                                 {{-- ═══ Collapsable: Pengalaman Mistis ═══ --}}
+                                 <div x-show="showExperiences"
+                                      x-transition:enter="transition ease-out duration-200"
+                                      x-transition:enter-start="opacity-0 -translate-y-2"
+                                      x-transition:enter-end="opacity-100 translate-y-0"
+                                      x-transition:leave="transition ease-in duration-150"
+                                      x-transition:leave-start="opacity-100 translate-y-0"
+                                      x-transition:leave-end="opacity-0 -translate-y-2"
+                                      class="border-t {{ $typeConfig['exp_border'] }} px-4 pb-4 pt-3 space-y-3"
+                                      style="display:none;">
+
+                                     <p class="text-xs font-semibold {{ $typeConfig['exp_hdr'] }} uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                         <span>🌙</span> Pengalaman Mistis Terkait
+                                     </p>
+
+                                     {{-- Experience list --}}
+                                     @forelse($ritual->ritualExperiences as $exp)
+                                         <div class="bg-slate-900/60 border border-slate-700/40 rounded-lg p-3 space-y-2">
+                                             <p class="text-xs text-slate-300 leading-relaxed italic">"{{ $exp->story }}"</p>
+                                             <div class="flex items-center justify-between">
+                                                 <div class="flex items-center gap-2">
+                                                     <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-slate-400">
+                                                         {{ strtoupper(substr($exp->user?->name ?? '?', 0, 1)) }}
+                                                     </span>
+                                                     <span class="text-[10px] text-slate-500">{{ $exp->user?->name ?? 'Anonim' }}</span>
+                                                     <span class="text-[10px] text-slate-600">· {{ $exp->created_at->diffForHumans() }}</span>
+                                                 </div>
+                                                 @auth
+                                                     @if(auth()->id() !== $exp->user_id)
+                                                         <button wire:click="witnessExperience({{ $exp->id }})"
+                                                                 class="flex items-center gap-1 text-[10px] text-slate-500 hover:text-amber-400 transition-colors group/wit">
+                                                             <span class="group-hover/wit:scale-110 transition-transform">👁</span>
+                                                             <span>{{ $exp->witness_count }} Saksi</span>
+                                                         </button>
+                                                     @else
+                                                         <span class="text-[10px] text-slate-600">👁 {{ $exp->witness_count }} Saksi</span>
+                                                     @endif
+                                                 @else
+                                                     <span class="text-[10px] text-slate-600">👁 {{ $exp->witness_count }} Saksi</span>
+                                                 @endauth
+                                             </div>
+                                         </div>
+                                     @empty
+                                         <div class="text-center py-3 text-slate-600 text-xs italic">
+                                             Belum ada pengalaman yang dibagikan untuk aturan ini.
+                                         </div>
+                                     @endforelse
+
+                                     {{-- Submit experience form (auth only) --}}
+                                     @auth
+                                         <div class="pt-2 border-t border-slate-700/30">
+                                             <button @click="showExpForm = !showExpForm"
+                                                     class="text-xs text-slate-500 hover:text-purple-400 transition-colors flex items-center gap-1.5 mb-2">
+                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                                 </svg>
+                                                 Bagikan Pengalamanmu
+                                             </button>
+                                             <div x-show="showExpForm" x-transition style="display:none;">
+                                                 <div class="space-y-2">
+                                                     <textarea
+                                                         wire:model="experienceStory"
+                                                         @focus="$wire.set('experienceRitualId', {{ $ritual->id }})"
+                                                         rows="3"
+                                                         maxlength="600"
+                                                         placeholder="Ceritakan pengalamanmu terkait aturan ini... (maks. 600 karakter)"
+                                                         class="w-full bg-slate-800/80 border border-slate-700/50 focus:border-purple-500/60 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500/30 resize-none transition-all"
+                                                     ></textarea>
+                                                     @error('experienceStory')
+                                                         <p class="text-xs text-red-400">{{ $message }}</p>
+                                                     @enderror
+                                                     <button wire:click="submitExperience"
+                                                             class="w-full py-1.5 bg-purple-700/60 hover:bg-purple-600/70 text-purple-200 text-xs font-semibold rounded-lg border border-purple-500/30 transition-all flex items-center justify-center gap-1.5">
+                                                         <span>🌙</span> Kirim Pengalaman
+                                                     </button>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     @endauth
+                                 </div>
+                             </div>
+                         @endforeach
+                     </div>
+                 </div>
+                 @endif
+
                  {{-- Live Reports Section with polling --}}
                  <div wire:poll.15s="refreshReports">
                      <h3 class="text-lg font-semibold border-b border-slate-700 pb-2 mb-4 text-slate-200 flex items-center justify-between">

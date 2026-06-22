@@ -2,6 +2,17 @@
 
 namespace App\Livewire;
 
+/**
+ * Migration yang dikelola oleh UrbanMap:
+ * - 2026_06_22_110303_create_ritual_requirements_table.php
+ * - 2026_06_22_113438_create_ritual_items_table.php
+ * - 2026_06_22_113531_create_ritual_experiences_table.php
+ * - 2026_06_22_115308_create_ritual_acknowledgements_table.php
+ * - 2026_06_22_020513_create_mystery_bookmarks_table.php
+ * - 2026_06_22_020516_create_mystery_comments_table.php
+ * - 2026_06_22_020519_create_scary_ratings_table.php
+ */
+
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Mystery;
@@ -134,20 +145,68 @@ class UrbanMap extends Component
     public function deleteMail($id)
     {
         if (auth()->check()) {
-            \App\Models\Mailbox::where('id', $id)->where('user_id', auth()->id())->delete();
+            \App\Entities\Mailbox::where('id', $id)->where('user_id', auth()->id())->delete();
+        }
+    }
+
+    public $experienceStory = '';
+    public $experienceRitualId = null;
+
+    public function acknowledgeRitual($ritualId)
+    {
+        if (!auth()->check()) return;
+
+        $ritual = \App\Models\RitualRequirement::find($ritualId);
+        if ($ritual) {
+            $ritual->ritualAcknowledgements()->create([
+                'user_id' => auth()->id()
+            ]);
+            $this->selectMystery($this->selectedMystery->id);
+        }
+    }
+
+    public function submitExperience()
+    {
+        if (!auth()->check() || !$this->experienceRitualId) return;
+
+        $this->validate([
+            'experienceStory' => 'required|string|min:5'
+        ]);
+
+        $ritual = \App\Models\RitualRequirement::find($this->experienceRitualId);
+        if ($ritual) {
+            $ritual->ritualExperiences()->create([
+                'user_id' => auth()->id(),
+                'story' => $this->experienceStory,
+                'witness_count' => 0
+            ]);
+            $this->experienceStory = '';
+            $this->experienceRitualId = null;
+            $this->selectMystery($this->selectedMystery->id);
+        }
+    }
+
+    public function witnessExperience($expId)
+    {
+        if (!auth()->check()) return;
+
+        $exp = \App\Entities\RitualExperience::find($expId);
+        if ($exp) {
+            $exp->increment('witness_count');
+            $this->selectMystery($this->selectedMystery->id);
         }
     }
 
     public function markMailboxAsRead()
     {
         if (auth()->check()) {
-            \App\Models\Mailbox::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
+            \App\Entities\Mailbox::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
         }
     }
 
     public function render()
     {
-        $mailboxes = auth()->check() ? \App\Models\Mailbox::where('user_id', auth()->id())->latest()->get() : collect();
+        $mailboxes = auth()->check() ? \App\Entities\Mailbox::where('user_id', auth()->id())->latest()->get() : collect();
 
         return view('livewire.urban-map', [
             'mailboxes' => $mailboxes

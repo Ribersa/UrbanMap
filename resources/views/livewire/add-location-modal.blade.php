@@ -113,6 +113,174 @@
                 @endif
             </div>
 
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- Ritual & Pantangan Section                   -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="border-t border-slate-700/60 pt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="text-base">📿</span> Ritual & Pantangan Setempat
+                        <span class="text-slate-600 font-normal normal-case tracking-normal">(Opsional)</span>
+                    </label>
+                    <button type="button" wire:click="addRitual"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-500/60 rounded-lg transition-all duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                        </svg>
+                        Tambah Aturan
+                    </button>
+                </div>
+
+                @if(count($rituals) === 0)
+                    <div class="text-center py-4 rounded-xl border border-dashed border-slate-700/60 bg-slate-800/20">
+                        <span class="text-2xl block mb-1">🪬</span>
+                        <p class="text-xs text-slate-500 italic">Belum ada aturan. Tambahkan pantangan atau tips keselamatan untuk lokasi ini.</p>
+                    </div>
+                @endif
+
+                <div class="space-y-3">
+                    @foreach($rituals as $index => $ritual)
+                        @php
+                            $rtColor = match($ritual['ritual_type']) {
+                                'pantangan' => 'border-red-500/30 bg-red-950/30',
+                                'prasyarat' => 'border-cyan-500/30 bg-cyan-950/30',
+                                default     => 'border-emerald-500/30 bg-emerald-950/30',
+                            };
+                        @endphp
+                        <div class="relative p-3 rounded-xl border {{ $rtColor }} transition-all duration-200 space-y-2.5"
+                             wire:key="ritual-{{ $index }}">
+
+                            {{-- Remove button --}}
+                            <button type="button" wire:click="removeRitual({{ $index }})"
+                                class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-500 hover:text-red-400 hover:bg-red-900/40 transition-all duration-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+
+                            {{-- Instruction textarea --}}
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Teks Aturan / Pantangan <span class="text-red-400">*</span></label>
+                                <textarea
+                                    wire:model="rituals.{{ $index }}.instruction"
+                                    rows="2"
+                                    maxlength="500"
+                                    placeholder="Contoh: Jangan memakai baju hijau saat berkunjung ke lokasi ini..."
+                                    class="w-full bg-slate-800/80 border @error('rituals.'.$index.'.instruction') border-red-500 @else border-slate-700/60 focus:border-purple-500/70 @enderror rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 @error('rituals.'.$index.'.instruction') focus:ring-red-500/40 @else focus:ring-purple-500/30 @enderror resize-none transition-all duration-200 pr-8"
+                                ></textarea>
+                                @error('rituals.'.$index.'.instruction')
+                                    <span class="text-xs text-red-400 mt-0.5 block">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            {{-- Tipe & Risiko selects --}}
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">Tipe Aturan <span class="text-red-400">*</span></label>
+                                    <select wire:model.live="rituals.{{ $index }}.ritual_type"
+                                        class="w-full bg-slate-800/80 border @error('rituals.'.$index.'.ritual_type') border-red-500 @else border-slate-700/60 focus:border-purple-500/70 @enderror rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500/30 appearance-none transition-colors">
+                                        <option value="tips">💡 Tips Aman</option>
+                                        <option value="prasyarat">🔑 Prasyarat</option>
+                                        <option value="pantangan">🚫 Pantangan</option>
+                                    </select>
+                                    @error('rituals.'.$index.'.ritual_type')
+                                        <span class="text-xs text-red-400 mt-0.5 block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">Tingkat Risiko <span class="text-red-400">*</span></label>
+                                    <select wire:model="rituals.{{ $index }}.risk_level"
+                                        class="w-full bg-slate-800/80 border @error('rituals.'.$index.'.risk_level') border-red-500 @else border-slate-700/60 focus:border-purple-500/70 @enderror rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500/30 appearance-none transition-colors">
+                                        <option value="low">🟢 Rendah</option>
+                                        <option value="medium">🟡 Sedang</option>
+                                        <option value="high">🔴 Tinggi</option>
+                                    </select>
+                                    @error('rituals.'.$index.'.risk_level')
+                                        <span class="text-xs text-red-400 mt-0.5 block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            {{-- ═══ Peralatan / Sesaji Sub-section ═══ --}}
+                            <div class="border-t border-white/5 pt-2.5">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                                        <span>⚗️</span> Peralatan / Sesaji
+                                        <span class="text-slate-600 font-normal">(Opsional)</span>
+                                    </label>
+                                    <button type="button" wire:click="addRitualItem({{ $index }})"
+                                        class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 rounded-lg transition-all duration-200">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                        </svg>
+                                        Tambah Item
+                                    </button>
+                                </div>
+
+                                @if(empty($ritual['items']))
+                                    <p class="text-[10px] text-slate-600 italic text-center py-1.5">
+                                        Belum ada perlengkapan. Klik "+ Tambah Item" untuk menambahkan.
+                                    </p>
+                                @else
+                                    <div class="space-y-2">
+                                        @foreach($ritual['items'] as $itemIndex => $item)
+                                            <div class="relative grid grid-cols-2 gap-2 p-2.5 bg-slate-800/40 border border-slate-700/40 rounded-lg"
+                                                 wire:key="ritual-{{ $index }}-item-{{ $itemIndex }}">
+
+                                                {{-- Remove item button --}}
+                                                <button type="button" wire:click="removeRitualItem({{ $index }}, {{ $itemIndex }})"
+                                                    class="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-slate-900/60 text-slate-600 hover:text-red-400 hover:bg-red-900/30 transition-all duration-200">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+
+                                                {{-- Item name --}}
+                                                <div>
+                                                    <label class="block text-[10px] text-slate-500 mb-0.5">Nama Barang <span class="text-red-400">*</span></label>
+                                                    <input type="text"
+                                                           wire:model="rituals.{{ $index }}.items.{{ $itemIndex }}.item_name"
+                                                           maxlength="100"
+                                                           placeholder="Kemenyan, Bunga..."
+                                                           class="w-full bg-slate-800/80 border @error('rituals.'.$index.'.items.'.$itemIndex.'.item_name') border-red-500 @else border-slate-700/50 focus:border-amber-500/50 @enderror rounded-md px-2 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-colors pr-6">
+                                                    @error('rituals.'.$index.'.items.'.$itemIndex.'.item_name')
+                                                        <span class="text-[10px] text-red-400 mt-0.5 block">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+
+                                                {{-- Quantity --}}
+                                                <div>
+                                                    <label class="block text-[10px] text-slate-500 mb-0.5">Jumlah / Takaran <span class="text-red-400">*</span></label>
+                                                    <input type="text"
+                                                           wire:model="rituals.{{ $index }}.items.{{ $itemIndex }}.quantity"
+                                                           maxlength="50"
+                                                           placeholder="3 buah, Secukupnya..."
+                                                           class="w-full bg-slate-800/80 border @error('rituals.'.$index.'.items.'.$itemIndex.'.quantity') border-red-500 @else border-slate-700/50 focus:border-amber-500/50 @enderror rounded-md px-2 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-colors">
+                                                    @error('rituals.'.$index.'.items.'.$itemIndex.'.quantity')
+                                                        <span class="text-[10px] text-red-400 mt-0.5 block">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+
+                                                {{-- Notes (full width) --}}
+                                                <div class="col-span-2">
+                                                    <label class="block text-[10px] text-slate-500 mb-0.5">Catatan Tambahan <span class="text-slate-600">(Opsional)</span></label>
+                                                    <input type="text"
+                                                           wire:model="rituals.{{ $index }}.items.{{ $itemIndex }}.notes"
+                                                           maxlength="255"
+                                                           placeholder="Keterangan tambahan..."
+                                                           class="w-full bg-slate-800/80 border border-slate-700/50 focus:border-slate-500/50 rounded-md px-2 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-500/20 transition-colors">
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- ═══ End Peralatan Section ═══ --}}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="pt-4 flex justify-end gap-3">
                 <button type="button" @click="$wire.closeModal()" class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">

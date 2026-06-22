@@ -46,7 +46,15 @@ class User extends Authenticatable
      */
     public function mailboxes()
     {
-        return $this->hasMany(Mailbox::class);
+        return $this->hasMany(\App\Entities\Mailbox::class);
+    }
+
+    /**
+     * Get the ritual acknowledgements for the user.
+     */
+    public function ritualAcknowledgements()
+    {
+        return $this->hasMany(\App\Entities\RitualAcknowledgement::class);
     }
 
     /**

@@ -2,6 +2,14 @@
 
 namespace App\Livewire;
 
+/**
+ * Migration yang dikelola oleh AddLocationModal:
+ * - 2026_06_08_145607_create_mysteries_table.php
+ * - 2026_06_15_043140_add_image_path_to_mysteries_and_live_reports.php
+ * - 2026_06_22_020511_create_categories_table.php
+ * - 2026_06_22_020514_create_media_proofs_table.php
+ */
+
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Mystery;
@@ -20,6 +28,8 @@ class AddLocationModal extends Component
     public $latitude;
     public $longitude;
     public $photo;
+    public $rituals = [];
+
 
     public $successMessage = '';
 
@@ -80,7 +90,7 @@ class AddLocationModal extends Component
             $imagePath = $this->photo->store('mysteries-photos', 'public');
         }
 
-        Mystery::create([
+        $mystery = Mystery::create([
             'user_id' => auth()->id(),
             'title' => $this->title,
             'slug' => Str::slug($this->title) . '-' . Str::random(5),
@@ -93,10 +103,66 @@ class AddLocationModal extends Component
             'image_path' => $imagePath,
         ]);
 
+        foreach ($this->rituals as $ritualData) {
+            if (empty(trim($ritualData['instruction']))) continue;
+
+            $req = $mystery->ritualRequirements()->create([
+                'instruction' => $ritualData['instruction'],
+                'ritual_type' => $ritualData['ritual_type'] ?? 'pantangan',
+                'risk_level' => $ritualData['risk_level'] ?? 1,
+            ]);
+
+            if (!empty($ritualData['items'])) {
+                foreach ($ritualData['items'] as $itemData) {
+                    if (empty(trim($itemData['item_name']))) continue;
+                    $req->ritualItems()->create([
+                        'item_name' => $itemData['item_name'],
+                        'quantity' => $itemData['quantity'] ?? 1,
+                        'notes' => $itemData['notes'] ?? null,
+                    ]);
+                }
+            }
+        }
+
         $this->successMessage = 'Lokasi berhasil diajukan! Menunggu persetujuan Admin.';
         
         // Hide modal after 3 seconds
         $this->dispatch('locationAdded');
+    }
+
+    public function addRitual()
+    {
+        $this->rituals[] = [
+            'instruction' => '',
+            'ritual_type' => 'pantangan',
+            'risk_level' => 1,
+            'items' => []
+        ];
+    }
+
+    public function removeRitual($index)
+    {
+        unset($this->rituals[$index]);
+        $this->rituals = array_values($this->rituals);
+    }
+
+    public function addRitualItem($index)
+    {
+        if (!isset($this->rituals[$index]['items'])) {
+            $this->rituals[$index]['items'] = [];
+        }
+        
+        $this->rituals[$index]['items'][] = [
+            'item_name' => '',
+            'quantity' => 1,
+            'notes' => ''
+        ];
+    }
+
+    public function removeRitualItem($ritualIndex, $itemIndex)
+    {
+        unset($this->rituals[$ritualIndex]['items'][$itemIndex]);
+        $this->rituals[$ritualIndex]['items'] = array_values($this->rituals[$ritualIndex]['items']);
     }
 
     public function render()

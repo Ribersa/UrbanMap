@@ -24,6 +24,11 @@ class Mystery extends Model
         return $this->hasMany(LiveReport::class);
     }
 
+    public function ritualRequirements()
+    {
+        return $this->hasMany(RitualRequirement::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

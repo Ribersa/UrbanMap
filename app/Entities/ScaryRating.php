@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Reputation extends Model
+class ScaryRating extends Model
 {
     //
 }

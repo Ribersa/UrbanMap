@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Badge extends Model
+class MediaProof extends Model
 {
     //
 }

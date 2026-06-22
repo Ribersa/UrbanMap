@@ -2,6 +2,15 @@
 
 namespace App\Livewire\Admin;
 
+/**
+ * Migration yang dikelola oleh ApprovalPanel:
+ * - 0001_01_01_000000_create_users_table.php
+ * - 0001_01_01_000001_create_cache_table.php
+ * - 0001_01_01_000002_create_jobs_table.php
+ * - 2026_06_09_000001_add_role_to_users_table.php
+ * - 2026_06_08_145651_create_live_reports_table.php
+ */
+
 use Livewire\Component;
 use App\Models\Mystery;
 use Livewire\Attributes\Layout;
@@ -21,7 +30,7 @@ class ApprovalPanel extends Component
         $mystery = Mystery::findOrFail($id);
         $mystery->update(['is_verified' => true]);
         
-        \App\Models\Mailbox::create([
+        \App\Entities\Mailbox::create([
             'user_id' => $mystery->user_id,
             'title' => 'Lokasi Berhasil Disetujui! 🎉',
             'message' => "Selamat, lokasi '{$mystery->title}' yang kamu ajukan telah diverifikasi oleh Admin dan sekarang sudah muncul di peta utama.",
@@ -36,7 +45,7 @@ class ApprovalPanel extends Component
         $title = $mystery->title;
         $userId = $mystery->user_id;
 
-        \App\Models\Mailbox::create([
+        \App\Entities\Mailbox::create([
             'user_id' => $userId,
             'title' => 'Pengajuan Lokasi Ditolak',
             'message' => "Mohon maaf, pengajuan lokasi '{$title}' kamu belum bisa diterima saat ini karena belum memenuhi kriteria atau data kurang lengkap.",
